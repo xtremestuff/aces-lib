@@ -64,7 +64,7 @@ array <float, 3> Y_2_linCV_f3(const array <float, 3> &Y, float Ymax, float Ymin)
     return linCV;
 }
 
-array <float, 3> linCV_2_Y_f3(array <float, 3> linCV, float Ymax, float Ymin)
+array <float, 3> linCV_2_Y_f3(const array <float, 3> &linCV, float Ymax, float Ymin)
 {
     array <float, 3> Y;
     Y[0] = linCV_2_Y( linCV[0], Ymax, Ymin);
@@ -73,7 +73,7 @@ array <float, 3> linCV_2_Y_f3(array <float, 3> linCV, float Ymax, float Ymin)
     return Y;
 }
 
-array <float, 3> darkSurround_to_dimSurround(array <float, 3> linearCV)
+array <float, 3> darkSurround_to_dimSurround(const array <float, 3> &linearCV)
 {
   array <float, 3> XYZ = mult_f3_f44( linearCV, AP1_2_XYZ_MAT);
   array <float, 3> xyY = XYZ_2_xyY(XYZ);
@@ -84,7 +84,7 @@ array <float, 3> darkSurround_to_dimSurround(array <float, 3> linearCV)
   return mult_f3_f44( XYZ, XYZ_2_AP1_MAT);
 }
 
-array <float, 3> dimSurround_to_darkSurround(array <float, 3> linearCV)
+array <float, 3> dimSurround_to_darkSurround(const array <float, 3> &linearCV)
 {
   array <float, 3> XYZ = mult_f3_f44( linearCV, AP1_2_XYZ_MAT);
 
