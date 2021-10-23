@@ -276,7 +276,7 @@ array<array <float, 3>, 3> calculate_cat_matrix
 array<array <float, 3>, 3> calculate_rgb_to_rgb_matrix
 (Chromaticities SOURCE_PRIMARIES,
     Chromaticities DEST_PRIMARIES,
-    const array<array <float, 3>, 3> coneRespMat = CONE_RESP_MAT_BRADFORD
+    const array<array <float, 3>, 3> coneRespMat = CONE_RESP_MAT_CAT02 //Changed Default to CAT02
 )
 {
     //
@@ -287,7 +287,7 @@ array<array <float, 3>, 3> calculate_rgb_to_rgb_matrix
     // done, a conversion back to CIE XYZ tristimulus values, and finally conversion from 
     // CIE XYZ tristimulus values to the destination RGB values.
     //
-    // By default, coneRespMat is set to CONE_RESP_MAT_BRADFORD. 
+    // By default, coneRespMat is set to CONE_RESP_MAT_CAT02. 
     // The default coneRespMat can be overridden at runtime. 
     //
 
