@@ -13,7 +13,7 @@ using namespace std;
 	#define HALF_MIN	5.96046448e-08f	// Smallest positive half
 #endif
 #ifndef HALF_MAX
-	#define HALF_MAX	65504.0f	// Largest positive half
+	#define HALF_MAX	65504.0	// Largest positive half
 #endif
 #ifndef HALF_POS_INF
 	#define HALF_POS_INF	0x7c00 // Half Positive Infinity
@@ -27,24 +27,24 @@ using namespace std;
 
 struct Chromaticities
 {
-	array <float, 2>	red;		// CIE xy coordinates of red primary
-	array <float, 2>	green;		// CIE xy coordinates of green primary
-	array <float, 2>	blue;		// CIE xy coordinates of blue primary
-	array <float, 2>	white;		// CIE xy coordinates of white point
+	array <double, 2>	red;		// CIE xy coordinates of red primary
+	array <double, 2>	green;		// CIE xy coordinates of green primary
+	array <double, 2>	blue;		// CIE xy coordinates of blue primary
+	array <double, 2>	white;		// CIE xy coordinates of white point
 };
 
 
-float pow10f(float x) {
-	return powf(10.0f, x);
+double pow10(double x) {
+	return pow(10.0, x);
 }
 
-float dot_f3_f3(const array <float, 3> &x, const array <float, 3> &y) {
+double dot_f3_f3(const array <double, 3> &x, const array <double, 3> &y) {
 	return x[0] * y[0] + x[1] * y[1] + x[2] * y[2];
 }
 
-array <float, 3> mult_f_f3(float f, const array <float, 3> &x) {
+array <double, 3> mult_f_f3(double f, const array <double, 3> &x) {
 
-	array <float, 3> r;
+	array <double, 3> r;
 
 	r[0] = f * x[0];
 	r[1] = f * x[1];
@@ -53,9 +53,9 @@ array <float, 3> mult_f_f3(float f, const array <float, 3> &x) {
 	return r;
 }
 
-array <array <float, 3>, 3> transpose_f33(array <array <float, 3>, 3> &a) {
+array <array <double, 3>, 3> transpose_f33(const array <array <double, 3>, 3> &a) {
 
-	array <array <float, 3>, 3> r;
+	array <array <double, 3>, 3> r;
 
 	for (int i = 0; i < 3; ++i) {
 
@@ -67,9 +67,9 @@ array <array <float, 3>, 3> transpose_f33(array <array <float, 3>, 3> &a) {
 	return r;
 }
 
-array <array <float, 4>, 4> transpose_f44(const array <array <float, 4>, 4> &a) {
+array <array <double, 4>, 4> transpose_f44(const array <array <double, 4>, 4> &a) {
 
-	array <array <float, 4>, 4> r;
+	array <array <double, 4>, 4> r;
 
 	for (int i = 0; i < 4; ++i) {
 
@@ -81,9 +81,9 @@ array <array <float, 4>, 4> transpose_f44(const array <array <float, 4>, 4> &a) 
 	return r;
 }
 
-array <array <float, 3>, 3> mult_f_f33(float f, const array <array <float, 3>, 3> &a) {
+array <array <double, 3>, 3> mult_f_f33(double f, const array <array <double, 3>, 3> &a) {
 
-	array <array <float, 3>, 3> r;
+	array <array <double, 3>, 3> r;
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -94,9 +94,9 @@ array <array <float, 3>, 3> mult_f_f33(float f, const array <array <float, 3>, 3
 	return r;
 }
 
-array <array <float, 4>, 4> mult_f_f44(float f, const array <array <float, 4>, 4> &a) {
+array <array <double, 4>, 4> mult_f_f44(double f, const array <array <double, 4>, 4> &a) {
 
-	array <array <float, 4>, 4> r;
+	array <array <double, 4>, 4> r;
 
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
@@ -108,12 +108,12 @@ array <array <float, 4>, 4> mult_f_f44(float f, const array <array <float, 4>, 4
 }
 
 
-array <float, 3> mult_f3_f33(const array <float, 3>& x, const array <array <float, 3>, 3>& a) {
-	array <float, 3> r;
+array <double, 3> mult_f3_f33(const array <double, 3>& x, const array <array <double, 3>, 3>& a) {
+	array <double, 3> r;
 
 	for (int i = 0; i < 3; ++i) {
 
-		r[i] = 0.0f;
+		r[i] = 0.0;
 
 		for (int j = 0; j < 3; ++j) {
 			r[i] = r[i] + x[j] * a[j][i];
@@ -123,13 +123,13 @@ array <float, 3> mult_f3_f33(const array <float, 3>& x, const array <array <floa
 }
 
 
-array <float, 3> mult_f3_f44(const array <float, 3> &x, const array <array <float, 4>, 4> &a) {
+array <double, 3> mult_f3_f44(const array <double, 3> &x, const array <array <double, 4>, 4> &a) {
 
-	array <float, 3> r;
+	array <double, 3> r;
 
 	for (int i = 0; i < 3; ++i) {
 
-		r[i] = 0.0f;
+		r[i] = 0.0;
 
 		for (int j = 0; j < 3; ++j) {
 			r[i] = r[i] + x[j] * a[j][i];
@@ -138,7 +138,7 @@ array <float, 3> mult_f3_f44(const array <float, 3> &x, const array <array <floa
 		r[i] = r[i] + a[3][i];
 	}
 
-	float s = 1.0f / (x[0] * a[0][3] + x[1] * a[1][3] + x[2] * a[2][3] + a[3][3]);
+	double s = 1.0 / (x[0] * a[0][3] + x[1] * a[1][3] + x[2] * a[2][3] + a[3][3]);
 
 	for (int k = 0; k < 3; ++k) {
 		r[k] = r[k] * s;
@@ -148,14 +148,14 @@ array <float, 3> mult_f3_f44(const array <float, 3> &x, const array <array <floa
 }
 
 
-array <array <float, 3>, 3> mult_f33_f33(const array <array <float, 3>, 3> &a, const array <array <float, 3>, 3> &b) {
+array <array <double, 3>, 3> mult_f33_f33(const array <array <double, 3>, 3> &a, const array <array <double, 3>, 3> &b) {
 
-	array <array <float, 3>, 3> r;
+	array <array <double, 3>, 3> r;
 
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
 
-			r[i][j] = 0.0f;
+			r[i][j] = 0.0;
 
 			for (int k = 0; k < 3; ++k) {
 				r[i][j] = r[i][j] + a[i][k] * b[k][j];
@@ -167,14 +167,14 @@ array <array <float, 3>, 3> mult_f33_f33(const array <array <float, 3>, 3> &a, c
 }
 
 
-array <array <float, 4>, 4> mult_f44_f44(const array <array <float, 4>, 4> &a, const array <array <float, 4>, 4> &b) {
+array <array <double, 4>, 4> mult_f44_f44(const array <array <double, 4>, 4> &a, const array <array <double, 4>, 4> &b) {
 
-	array <array <float, 4>, 4> r;
+	array <array <double, 4>, 4> r;
 
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
 
-			r[i][j] = 0.0f;
+			r[i][j] = 0.0;
 
 			for (int k = 0; k < 4; ++k) {
 				r[i][j] = r[i][j] + a[i][k] * b[k][j];
@@ -186,9 +186,9 @@ array <array <float, 4>, 4> mult_f44_f44(const array <array <float, 4>, 4> &a, c
 }
 
 
-array <array <float, 3>, 3> add_f33_f33(const array <array <float, 3>, 3> &a, const array <array <float, 3>, 3> &b) {
+array <array <double, 3>, 3> add_f33_f33(const array <array <double, 3>, 3> &a, const array <array <double, 3>, 3> &b) {
 
-	array <array <float, 3>, 3> r;
+	array <array <double, 3>, 3> r;
 
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
@@ -200,10 +200,10 @@ array <array <float, 3>, 3> add_f33_f33(const array <array <float, 3>, 3> &a, co
 }
 
 
-array <array <float, 3>, 3> invert_f33(const array <array <float, 3>, 3>& a) {
+array <array <double, 3>, 3> invert_f33(const array <array <double, 3>, 3>& a) {
 
-	float determinant = 0.0f;
-	array <array <float, 3>, 3> res = { { {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}} };
+	double determinant = 0.0;
+	array <array <double, 3>, 3> res = { { {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}} };
 
 	for (int i = 0; i < 3; i++)
 		determinant += (a[0][i] * (a[1][(i + 1) % 3] * a[2][(i + 2) % 3] - a[1][(i + 2) % 3] * a[2][(i + 1) % 3]));
@@ -217,10 +217,10 @@ array <array <float, 3>, 3> invert_f33(const array <array <float, 3>, 3>& a) {
 
 }
 
-array <array <float, 4>, 4> invert_f44(const array <array <float, 4>, 4>& a) {
+array <array <double, 4>, 4> invert_f44(const array <array <double, 4>, 4>& a) {
 
-	float determinant = 0.0f;
-	array <array <float, 4>, 4> res = { { {1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f} } };
+	double determinant = 0.0;
+	array <array <double, 4>, 4> res = { { {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0} } };
 	int len = 3;
 
 	if (a[0][3] != 0 || a[1][3] != 0 || a[2][3] != 0 || a[3][3] != 1)
@@ -239,60 +239,60 @@ array <array <float, 4>, 4> invert_f44(const array <array <float, 4>, 4>& a) {
 }
 
 
-array <array <float, 4>, 4> RGBtoXYZ(const Chromaticities &chroma, float Y)
+array <array <double, 4>, 4> RGBtoXYZ(const Chromaticities &chroma, double Y)
 {
 	//
 	// X and Z values of RGB value (1, 1, 1), or "white"
 	//
 
-	float X = chroma.white[0] * Y / chroma.white[1];
-	float Z = (1.0f - chroma.white[0] - chroma.white[1]) * Y / chroma.white[1];
+	double X = chroma.white[0] * Y / chroma.white[1];
+	double Z = (1.0 - chroma.white[0] - chroma.white[1]) * Y / chroma.white[1];
 
 	//
 	// Scale factors for matrix rows
 	//
 
-	float d = chroma.red[0] * (chroma.blue[1] - chroma.green[1]) +
+	double d = chroma.red[0] * (chroma.blue[1] - chroma.green[1]) +
 		chroma.blue[0] * (chroma.green[1] - chroma.red[1]) +
 		chroma.green[0] * (chroma.red[1] - chroma.blue[1]);
 
-	float Sr = (X * (chroma.blue[1] - chroma.green[1]) -
-		chroma.green[0] * (Y * (chroma.blue[1] - 1.0f) +
+	double Sr = (X * (chroma.blue[1] - chroma.green[1]) -
+		chroma.green[0] * (Y * (chroma.blue[1] - 1.0) +
 			chroma.blue[1] * (X + Z)) +
-		chroma.blue[0] * (Y * (chroma.green[1] - 1.0f) +
+		chroma.blue[0] * (Y * (chroma.green[1] - 1.0) +
 			chroma.green[1] * (X + Z))) / d;
 
-	float Sg = (X * (chroma.red[1] - chroma.blue[1]) +
-		chroma.red[0] * (Y * (chroma.blue[1] - 1.0f) +
+	double Sg = (X * (chroma.red[1] - chroma.blue[1]) +
+		chroma.red[0] * (Y * (chroma.blue[1] - 1.0) +
 			chroma.blue[1] * (X + Z)) -
-		chroma.blue[0] * (Y * (chroma.red[1] - 1.0f) +
+		chroma.blue[0] * (Y * (chroma.red[1] - 1.0) +
 			chroma.red[1] * (X + Z))) / d;
 
-	float Sb = (X * (chroma.green[1] - chroma.red[1]) -
-		chroma.red[0] * (Y * (chroma.green[1] - 1.0f) +
+	double Sb = (X * (chroma.green[1] - chroma.red[1]) -
+		chroma.red[0] * (Y * (chroma.green[1] - 1.0) +
 			chroma.green[1] * (X + Z)) +
-		chroma.green[0] * (Y * (chroma.red[1] - 1.0f) +
+		chroma.green[0] * (Y * (chroma.red[1] - 1.0) +
 			chroma.red[1] * (X + Z))) / d;
 
 	//
 	// Assemble the matrix
 	//
 
-	array <array <float, 4>, 4> M;
+	array <array <double, 4>, 4> M;
 
 	M[0][0] = Sr * chroma.red[0];
 	M[0][1] = Sr * chroma.red[1];
-	M[0][2] = Sr * (1.0f - chroma.red[0] - chroma.red[1]);
+	M[0][2] = Sr * (1.0 - chroma.red[0] - chroma.red[1]);
 	M[0][3] = 0;
 
 	M[1][0] = Sg * chroma.green[0];
 	M[1][1] = Sg * chroma.green[1];
-	M[1][2] = Sg * (1.0f - chroma.green[0] - chroma.green[1]);
+	M[1][2] = Sg * (1.0 - chroma.green[0] - chroma.green[1]);
 	M[1][3] = 0;
 
 	M[2][0] = Sb * chroma.blue[0];
 	M[2][1] = Sb * chroma.blue[1];
-	M[2][2] = Sb * (1.0f - chroma.blue[0] - chroma.blue[1]);
+	M[2][2] = Sb * (1.0 - chroma.blue[0] - chroma.blue[1]);
 	M[2][3] = 0;
 
 	M[3][0] = 0;
@@ -303,16 +303,16 @@ array <array <float, 4>, 4> RGBtoXYZ(const Chromaticities &chroma, float Y)
 	return M;
 }
 
-array <array <float, 4>, 4> XYZtoRGB(const Chromaticities &c, float Y) {
+array <array <double, 4>, 4> XYZtoRGB(const Chromaticities &c, double Y) {
 
-	array <array <float, 4>, 4> M = RGBtoXYZ(c, Y);
+	array <array <double, 4>, 4> M = RGBtoXYZ(c, Y);
 	M = invert_f44(M);
 	return M;
 }
 
 
 template <size_t int1D_N>
-float interpolate1D(const array <array <float, int1D_N>, 2> &table, float p)
+double interpolate1D(const array <array <double, int1D_N>, 2> &table, double p)
 {
 	int size = table.size();
 
@@ -340,8 +340,8 @@ float interpolate1D(const array <array <float, int1D_N>, 2> &table, float p)
 			j = k;
 	}
 
-	float t = (p - table[i][0]) / (table[i + 1][0] - table[i][0]);
-	float s = 1 - t;
+	double t = (p - table[i][0]) / (table[i + 1][0] - table[i][0]);
+	double s = 1 - t;
 
 	return s * table[i][1] + t * table[i + 1][1];
 }

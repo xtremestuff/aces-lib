@@ -19,43 +19,43 @@ using namespace std;
 
 
 
-array <float, 3> limit_to_primaries(const array <float, 3> &XYZ, Chromaticities LIMITING_PRI)
+array <double, 3> limit_to_primaries(const array <double, 3> &XYZ, Chromaticities LIMITING_PRI)
 {
-    array <array <float, 4>, 4> XYZ_2_LIMITING_PRI_MAT = XYZtoRGB( LIMITING_PRI, 1.0f);
-    array <array <float, 4>, 4> LIMITING_PRI_2_XYZ_MAT = RGBtoXYZ( LIMITING_PRI, 1.0f);
+    array <array <double, 4>, 4> XYZ_2_LIMITING_PRI_MAT = XYZtoRGB( LIMITING_PRI, 1.0);
+    array <array <double, 4>, 4> LIMITING_PRI_2_XYZ_MAT = RGBtoXYZ( LIMITING_PRI, 1.0);
 
     // XYZ to limiting primaries
-    array <float, 3> rgb = mult_f3_f44( XYZ, XYZ_2_LIMITING_PRI_MAT);
+    array <double, 3> rgb = mult_f3_f44( XYZ, XYZ_2_LIMITING_PRI_MAT);
 
     // Clip any values outside the limiting primaries
-    array <float, 3> limitedRgb = clamp_f3( rgb, 0.0f, 1.0f);
+    array <double, 3> limitedRgb = clamp_f3( rgb, 0.0, 1.0);
     
     // Convert limited RGB to XYZ
     return mult_f3_f44( limitedRgb, LIMITING_PRI_2_XYZ_MAT);
 }
 
-array <float, 3> dark_to_dim(const array <float, 3> &XYZ)
+array <double, 3> dark_to_dim(const array <double, 3> &XYZ)
 {
-  array <float, 3> xyY = XYZ_2_xyY(XYZ);
-  xyY[2] = clamp( xyY[2], 0.0f, HALF_POS_INF);
+  array <double, 3> xyY = XYZ_2_xyY(XYZ);
+  xyY[2] = clamp( xyY[2], 0.0, HALF_POS_INF);
   xyY[2] = powf( xyY[2], DIM_SURROUND_GAMMA);
   return xyY_2_XYZ(xyY);
 }
 
-array <float, 3> dim_to_dark(const array <float, 3> &XYZ)
+array <double, 3> dim_to_dark(const array <double, 3> &XYZ)
 {
-  array <float, 3> xyY = XYZ_2_xyY(XYZ);
-  xyY[2] = clamp( xyY[2], 0.0f, HALF_POS_INF);
-  xyY[2] = powf( xyY[2], 1.0f/DIM_SURROUND_GAMMA);
+  array <double, 3> xyY = XYZ_2_xyY(XYZ);
+  xyY[2] = clamp( xyY[2], 0.0, HALF_POS_INF);
+  xyY[2] = powf( xyY[2], 1.0/DIM_SURROUND_GAMMA);
   return xyY_2_XYZ(xyY);
 }
 
-array <float,3> outputTransform
+array <double,3> outputTransform
 (
-    const array <float, 3> &in,
-    float Y_MIN,
-    float Y_MID,
-    float Y_MAX,    
+    const array <double, 3> &in,
+    double Y_MIN,
+    double Y_MID,
+    double Y_MAX,    
     Chromaticities DISPLAY_PRI,
     Chromaticities LIMITING_PRI,
     int EOTF,  
@@ -65,29 +65,29 @@ array <float,3> outputTransform
     bool LEGAL_RANGE = false
 )
 {
-    array <array <float, 4>, 4> XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI, 1.0f);
+    array <array <double, 4>, 4> XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI, 1.0);
 
     /* 
         NOTE: This is a bit of a hack - probably a more direct way to do this.
         TODO: Fix in future version
     */
     TsParams PARAMS_DEFAULT = init_TsParams( Y_MIN, Y_MAX);
-    float expfShift = log2f(inv_ssts(Y_MID, PARAMS_DEFAULT))-log2f(0.18f);
+    double expfShift = log2f(inv_ssts(Y_MID, PARAMS_DEFAULT))-log2f(0.18);
     TsParams PARAMS = init_TsParams( Y_MIN, Y_MAX, expfShift);
 
     // RRT sweeteners
-    array <float, 3> rgbPre = rrt_sweeteners( in);
+    array <double, 3> rgbPre = rrt_sweeteners( in);
 
     // Apply the tonescale independently in rendering-space RGB
-    array <float, 3> rgbPost = ssts_f3( rgbPre, PARAMS);
+    array <double, 3> rgbPost = ssts_f3( rgbPre, PARAMS);
 
     // At this point data encoded AP1, scaled absolute luminance (cd/m^2)
 
     /*  Scale absolute luminance to linear code value  */
-    array <float, 3> linearCV = Y_2_linCV_f3( rgbPost, Y_MAX, Y_MIN);
+    array <double, 3> linearCV = Y_2_linCV_f3( rgbPost, Y_MAX, Y_MIN);
     
     // Rendering primaries to XYZ
-    array <float, 3> XYZ = mult_f3_f44( linearCV, AP1_2_XYZ_MAT);
+    array <double, 3> XYZ = mult_f3_f44( linearCV, AP1_2_XYZ_MAT);
 
     // Apply gamma adjustment to compensate for dim surround
     /*  
@@ -135,7 +135,7 @@ array <float,3> outputTransform
     if (D60_SIM == false) {
         if ((DISPLAY_PRI.white[0] != AP0.white[0]) &
             (DISPLAY_PRI.white[1] != AP0.white[1])) {
-            array <array <float, 3>, 3> CAT = calculate_cat_matrix( AP0.white, DISPLAY_PRI.white);
+            array <array <double, 3>, 3> CAT = calculate_cat_matrix( AP0.white, DISPLAY_PRI.white);
             XYZ = mult_f3_f33( XYZ, D60_2_D65_CAT);
         }
     }
@@ -152,17 +152,17 @@ array <float,3> outputTransform
            Currently precalculated for D65, DCI. If DCI, roll_white_fwd is used also.
            This needs a more complex algorithm to handle all cases.
         */
-        float SCALE = 1.0f;
-        if ((DISPLAY_PRI.white[0] == 0.3127f) & 
-            (DISPLAY_PRI.white[1] == 0.329f)) { // D65
-                SCALE = 0.96362f;
+        double SCALE = 1.0;
+        if ((DISPLAY_PRI.white[0] == 0.3127) & 
+            (DISPLAY_PRI.white[1] == 0.329)) { // D65
+                SCALE = 0.96362;
         } 
-        else if ((DISPLAY_PRI.white[0] == 0.314f) & 
-                 (DISPLAY_PRI.white[1] == 0.351f)) { // DCI
-                linearCV[0] = roll_white_fwd( linearCV[0], 0.918f, 0.5f);
-                linearCV[1] = roll_white_fwd( linearCV[1], 0.918, 0.5f);
-                linearCV[2] = roll_white_fwd( linearCV[2], 0.918, 0.5f);
-                SCALE = 0.96f;                
+        else if ((DISPLAY_PRI.white[0] == 0.314) & 
+                 (DISPLAY_PRI.white[1] == 0.351)) { // DCI
+                linearCV[0] = roll_white_fwd( linearCV[0], 0.918, 0.5);
+                linearCV[1] = roll_white_fwd( linearCV[1], 0.918, 0.5);
+                linearCV[2] = roll_white_fwd( linearCV[2], 0.918, 0.5);
+                SCALE = 0.96;                
         } 
         linearCV = mult_f_f3( SCALE, linearCV);
     }
@@ -171,7 +171,7 @@ array <float,3> outputTransform
     // Clip values < 0 (i.e. projecting outside the display primaries)
     // NOTE: P3 red and values close to it fall outside of Rec.2020 green-red 
     // boundary
-    linearCV = clamp_f3( linearCV, 0.0f, HALF_POS_INF);
+    linearCV = clamp_f3( linearCV, 0.0, HALF_POS_INF);
 
     // EOTF
     // 0: ST-2084 (PQ)
@@ -181,30 +181,30 @@ array <float,3> outputTransform
     // 3: gamma 2.6
     // 4: linear (no EOTF)
     // 5: HLG
-    array <float, 3> outputCV;
+    array <double, 3> outputCV;
     if (EOTF == 0) {  // ST-2084 (PQ)
         // NOTE: This is a kludgy way of ensuring a PQ code value of 0. Ideally,
         // luminance would map directly to code value, but colorists don't like
         // that. Might just need the tonescale to go darker so that darkest
         // values through the tone scale quantize to code value of 0.
         if (STRETCH_BLACK == true) {
-            outputCV = Y_2_ST2084_f3( clamp_f3( linCV_2_Y_f3(linearCV, Y_MAX, 0.0f), 0.0f, HALF_POS_INF) );
+            outputCV = Y_2_ST2084_f3( clamp_f3( linCV_2_Y_f3(linearCV, Y_MAX, 0.0), 0.0, HALF_POS_INF) );
         } else {
             outputCV = Y_2_ST2084_f3( linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN) );        
         }
     } else if (EOTF == 1) { // BT.1886 (Rec.709/2020 settings)
-        outputCV = bt1886_r_f3( linearCV, 2.4f, 1.0f, 0.0f);
+        outputCV = bt1886_r_f3( linearCV, 2.4, 1.0, 0.0);
     } else if (EOTF == 2) { // sRGB (mon_curve w/ presets)
-        outputCV = moncurve_r_f3( linearCV, 2.4f, 0.055f);
+        outputCV = moncurve_r_f3( linearCV, 2.4, 0.055);
     } else if (EOTF == 3) { // gamma 2.6
-        outputCV = powf_f3( linearCV, 1.0f/2.6f);
+        outputCV = powf_f3( linearCV, 1.0/2.6);
     } else if (EOTF == 4) { // linear
         outputCV = linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN);
     } else if (EOTF == 5) { // HLG
         // NOTE: HLG just maps ST.2084 output to HLG encoding. 
         // TODO: Restructure if/else tree to minimize this redundancy.
         if (STRETCH_BLACK == true) {
-            outputCV = Y_2_ST2084_f3( clamp_f3( linCV_2_Y_f3(linearCV, Y_MAX, 0.0f), 0.0f, HALF_POS_INF) );
+            outputCV = Y_2_ST2084_f3( clamp_f3( linCV_2_Y_f3(linearCV, Y_MAX, 0.0), 0.0, HALF_POS_INF) );
         }
         else {
             outputCV = Y_2_ST2084_f3( linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN) );        
@@ -219,12 +219,12 @@ array <float,3> outputTransform
     return outputCV;    
 }
 
-array <float, 3> invOutputTransform
+array <double, 3> invOutputTransform
 (
-    array <float, 3> in,
-    float Y_MIN,
-    float Y_MID,
-    float Y_MAX,    
+    array <double, 3> in,
+    double Y_MIN,
+    double Y_MID,
+    double Y_MAX,    
     Chromaticities DISPLAY_PRI,
     Chromaticities LIMITING_PRI,
     int EOTF,  
@@ -234,17 +234,17 @@ array <float, 3> invOutputTransform
     bool LEGAL_RANGE = false
 )
 {
-    array <array <float, 4>, 4> DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ( DISPLAY_PRI, 1.0f);
+    array <array <double, 4>, 4> DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ( DISPLAY_PRI, 1.0);
 
     /* 
         NOTE: This is a bit of a hack - probably a more direct way to do this.
         TODO: Update in accordance with forward algorithm.
     */
     TsParams PARAMS_DEFAULT = init_TsParams( Y_MIN, Y_MAX);
-    float expfShift = log2f(inv_ssts(Y_MID, PARAMS_DEFAULT))-log2f(0.18);
+    double expfShift = log2f(inv_ssts(Y_MID, PARAMS_DEFAULT))-log2f(0.18);
     TsParams PARAMS = init_TsParams( Y_MIN, Y_MAX, expfShift);
 
-    array <float, 3> outputCV = in;
+    array <double, 3> outputCV = in;
 
     if (LEGAL_RANGE == true) {
         outputCV = smpteRange_to_fullRange_f3( outputCV);
@@ -258,25 +258,25 @@ array <float, 3> invOutputTransform
     // 3: gamma 2.6
     // 4: linear (no EOTF)
     // 5: HLG
-    array <float, 3> linearCV;
+    array <double, 3> linearCV;
     if (EOTF == 0) {  // ST-2084 (PQ)
         if (STRETCH_BLACK == true) {
-            linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, 0.0f);
+            linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, 0.0);
         } else {
             linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, Y_MIN);
         }
     } else if (EOTF == 1) { // BT.1886 (Rec.709/2020 settings)
-        linearCV = bt1886_f_f3( outputCV, 2.4f, 1.0f, 0.0f);
+        linearCV = bt1886_f_f3( outputCV, 2.4, 1.0, 0.0);
     } else if (EOTF == 2) { // sRGB (mon_curve w/ presets)
-        linearCV = moncurve_f_f3( outputCV, 2.4f, 0.055f);
+        linearCV = moncurve_f_f3( outputCV, 2.4, 0.055);
     } else if (EOTF == 3) { // gamma 2.6
-        linearCV = powf_f3( outputCV, 2.6f);
+        linearCV = powf_f3( outputCV, 2.6);
     } else if (EOTF == 4) { // linear
         linearCV = Y_2_linCV_f3( outputCV, Y_MAX, Y_MIN);
     } else if (EOTF == 5) { // HLG
         outputCV = HLG_2_ST2084_1000nits_f3( outputCV);
         if (STRETCH_BLACK == true) {
-            linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, 0.0f);
+            linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, 0.0);
         } else {
             linearCV = Y_2_linCV_f3( ST2084_2_Y_f3( outputCV), Y_MAX, Y_MIN);
         }
@@ -289,30 +289,30 @@ array <float, 3> invOutputTransform
             Currently using precalculated values for D65, DCI.
             If DCI, roll_white_fwd is used also.
         */
-        float SCALE = 1.0f;
-        if ((DISPLAY_PRI.white[0] == 0.3127f) & 
-            (DISPLAY_PRI.white[1] == 0.329f)) { // D65
-                SCALE = 0.96362f;
-                linearCV = mult_f_f3( 1.0f/SCALE, linearCV);
+        double SCALE = 1.0;
+        if ((DISPLAY_PRI.white[0] == 0.3127) & 
+            (DISPLAY_PRI.white[1] == 0.329)) { // D65
+                SCALE = 0.96362;
+                linearCV = mult_f_f3( 1.0/SCALE, linearCV);
         } 
-        else if ((DISPLAY_PRI.white[0] == 0.314f) & 
-                 (DISPLAY_PRI.white[1] == 0.351f)) { // DCI
-                SCALE = 0.96f;                
-                linearCV[0] = roll_white_rev( linearCV[0]/SCALE, 0.918f, 0.5f);
-                linearCV[1] = roll_white_rev( linearCV[1]/SCALE, 0.918f, 0.5f);
-                linearCV[2] = roll_white_rev( linearCV[2]/SCALE, 0.918f, 0.5f);
+        else if ((DISPLAY_PRI.white[0] == 0.314) & 
+                 (DISPLAY_PRI.white[1] == 0.351)) { // DCI
+                SCALE = 0.96;                
+                linearCV[0] = roll_white_rev( linearCV[0]/SCALE, 0.918, 0.5);
+                linearCV[1] = roll_white_rev( linearCV[1]/SCALE, 0.918, 0.5);
+                linearCV[2] = roll_white_rev( linearCV[2]/SCALE, 0.918, 0.5);
         } 
 
     }    
 
     // Encoding primaries to CIE XYZ
-    array <float, 3> XYZ = mult_f3_f44( linearCV, DISPLAY_PRI_2_XYZ_MAT);
+    array <double, 3> XYZ = mult_f3_f44( linearCV, DISPLAY_PRI_2_XYZ_MAT);
 
     // Undo CAT from assumed observer adapted white point to ACES white point
     if (D60_SIM == false) {
         if ((DISPLAY_PRI.white[0] != AP0.white[0]) &
             (DISPLAY_PRI.white[1] != AP0.white[1])) {
-            array <array <float, 3>, 3> CAT = calculate_cat_matrix( AP0.white, DISPLAY_PRI.white);
+            array <array <double, 3>, 3> CAT = calculate_cat_matrix( AP0.white, DISPLAY_PRI.white);
             XYZ = mult_f3_f33( XYZ, invert_f33(D60_2_D65_CAT) );
         }
     }
@@ -353,13 +353,13 @@ array <float, 3> invOutputTransform
     // XYZ to rendering primaries
     linearCV = mult_f3_f44( XYZ, XYZ_2_AP1_MAT);
 
-    array <float, 3> rgbPost = linCV_2_Y_f3( linearCV, Y_MAX, Y_MIN);
+    array <double, 3> rgbPost = linCV_2_Y_f3( linearCV, Y_MAX, Y_MIN);
 
     // Apply the inverse tonescale independently in rendering-space RGB
-    array <float, 3> rgbPre = inv_ssts_f3( rgbPost, PARAMS);
+    array <double, 3> rgbPre = inv_ssts_f3( rgbPost, PARAMS);
 
     // RRT sweeteners
-    array <float, 3> aces = inv_rrt_sweeteners( rgbPre);
+    array <double, 3> aces = inv_rrt_sweeteners( rgbPre);
 
     return aces;
 }

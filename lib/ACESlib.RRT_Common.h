@@ -16,89 +16,89 @@ using namespace std;
 
 
 // "Glow" module constants
-const float RRT_GLOW_GAIN = 0.05f;
-const float RRT_GLOW_MID = 0.08f;
+const double RRT_GLOW_GAIN = 0.05;
+const double RRT_GLOW_MID = 0.08;
 
 // Red modifier constants
-const float RRT_RED_SCALE = 0.82f;
-const float RRT_RED_PIVOT = 0.03f;
-const float RRT_RED_HUE = 0.0f;
-const float RRT_RED_WIDTH = 135.0f;
+const double RRT_RED_SCALE = 0.82;
+const double RRT_RED_PIVOT = 0.03;
+const double RRT_RED_HUE = 0.0;
+const double RRT_RED_WIDTH = 135.0;
 
 // Desaturation contants
-const float RRT_SAT_FACTOR = 0.96f;
-const array <array <float, 3>, 3> RRT_SAT_MAT = calc_sat_adjust_matrix( RRT_SAT_FACTOR, AP1_RGB2Y);
+const double RRT_SAT_FACTOR = 0.96;
+const array <array <double, 3>, 3> RRT_SAT_MAT = calc_sat_adjust_matrix( RRT_SAT_FACTOR, AP1_RGB2Y);
 
 
 
 
 // ------- Glow module functions
-float glow_fwd( float ycIn, float glowGainIn, float glowMid)
+double glow_fwd( double ycIn, double glowGainIn, double glowMid)
 {
-   float glowGainOut;
+   double glowGainOut;
 
-   if (ycIn <= 2.0f/3.0f * glowMid) {
+   if (ycIn <= 2.0/3.0 * glowMid) {
      glowGainOut = glowGainIn;
-   } else if ( ycIn >= 2.0f * glowMid) {
-     glowGainOut = 0.0f;
+   } else if ( ycIn >= 2.0 * glowMid) {
+     glowGainOut = 0.0;
    } else {
-     glowGainOut = glowGainIn * (glowMid / ycIn - 1.0f/2.0f);
+     glowGainOut = glowGainIn * (glowMid / ycIn - 1.0/2.0);
    }
 
    return glowGainOut;
 }
 
-float glow_inv( float ycOut, float glowGainIn, float glowMid)
+double glow_inv( double ycOut, double glowGainIn, double glowMid)
 {
-    float glowGainOut;
+    double glowGainOut;
 
-    if (ycOut <= ((1.0f + glowGainIn) * 2.0f/3.0f * glowMid)) {
-    glowGainOut = -glowGainIn / (1.0f + glowGainIn);
-    } else if ( ycOut >= (2.0f * glowMid)) {
-    glowGainOut = 0.0f;
+    if (ycOut <= ((1.0 + glowGainIn) * 2.0/3.0 * glowMid)) {
+    glowGainOut = -glowGainIn / (1.0 + glowGainIn);
+    } else if ( ycOut >= (2.0 * glowMid)) {
+    glowGainOut = 0.0;
     } else {
-    glowGainOut = glowGainIn * (glowMid / ycOut - 1.0f/2.0f) / (glowGainIn / 2.0f - 1.0f);
+    glowGainOut = glowGainIn * (glowMid / ycOut - 1.0/2.0) / (glowGainIn / 2.0 - 1.0);
     }
 
     return glowGainOut;
 }
 
-float sigmoid_shaper( float x)
+double sigmoid_shaper( double x)
 {
     // Sigmoid function in the range 0 to 1 spanning -2 to +2.
 
-    float t = max( 1.0f - fabs( x / 2.0f), 0.0f);
-    float y = 1.0f + sign(x) * (1.0f - t * t);
+    double t = max( 1.0 - fabs( x / 2.0), 0.0);
+    double y = 1.0 + sign(x) * (1.0 - t * t);
 
-    return y / 2.0f;
+    return y / 2.0;
 }
 
 
 // ------- Red modifier functions
-float cubic_basis_shaper
+double cubic_basis_shaper
 ( 
-  float x, 
-  float w   // full base width of the shaper function (in degrees)
+  double x, 
+  double w   // full base width of the shaper function (in degrees)
 )
 {
-    array <array <float, 4>, 4> M = { { { -1.0f / 6.0f,  3.0f / 6.0f, -3.0f / 6.0f,  1.0f / 6.0f },
-                      {  3.0f / 6.0f, -6.0f / 6.0f,  3.0f / 6.0f,  0.0f / 6.0f },
-                      { -3.0f / 6.0f,  0.0f / 6.0f,  3.0f / 6.0f,  0.0f / 6.0f },
-                      {  1.0f / 6.0f,  4.0f / 6.0f,  1.0f / 6.0f,  0.0f / 6.0f } } };
+    array <array <double, 4>, 4> M = { { { -1.0 / 6.0,  3.0 / 6.0, -3.0 / 6.0,  1.0 / 6.0 },
+                      {  3.0 / 6.0, -6.0 / 6.0,  3.0 / 6.0,  0.0 / 6.0 },
+                      { -3.0 / 6.0,  0.0 / 6.0,  3.0 / 6.0,  0.0 / 6.0 },
+                      {  1.0 / 6.0,  4.0 / 6.0,  1.0 / 6.0,  0.0 / 6.0 } } };
   
-    array <float, 5> knots = { -w/2.0f,
-                     -w/4.0f,
-                     0.0f,
-                     w/4.0f,
-                     w/2.0f };
+    array <double, 5> knots = { -w/2.0,
+                     -w/4.0,
+                     0.0,
+                     w/4.0,
+                     w/2.0 };
   
-  float y = 0.0f;
+  double y = 0.0;
   if ((x > knots[0]) && (x < knots[4])) {  
-    float knot_coord = (x - knots[0]) * 4.0f/w;  
+    double knot_coord = (x - knots[0]) * 4.0/w;  
     int j = knot_coord;
-    float t = knot_coord - j;
+    double t = knot_coord - j;
       
-    array <float, 4> monomials = { t*t*t, t*t, t, 1.0f };
+    array <double, 4> monomials = { t*t*t, t*t, t, 1.0 };
 
     // (if/else structure required for compatibility with CTL < v1.5.)
     if ( j == 3) {
@@ -114,97 +114,97 @@ float cubic_basis_shaper
       y = monomials[0] * M[0][3] + monomials[1] * M[1][3] + 
           monomials[2] * M[2][3] + monomials[3] * M[3][3];
     } else {
-      y = 0.0f;
+      y = 0.0;
     }
   }
   
-  return y * 3.0f/2.0f;
+  return y * 3.0/2.0;
 }
 
-float center_hue( float hue, float centerH)
+double center_hue( double hue, double centerH)
 {
-  float hueCentered = hue - centerH;
-  if (hueCentered < -180.0f) hueCentered = hueCentered + 360.0f;
-  else if (hueCentered > 180.0f) hueCentered = hueCentered - 360.0f;
+  double hueCentered = hue - centerH;
+  if (hueCentered < -180.0) hueCentered = hueCentered + 360.0;
+  else if (hueCentered > 180.0) hueCentered = hueCentered - 360.0;
   return hueCentered;
 }
 
-float uncenter_hue( float hueCentered, float centerH)
+double uncenter_hue( double hueCentered, double centerH)
 {
-  float hue = hueCentered + centerH;
-  if (hue < 0.0f) hue = hue + 360.0f;
-  else if (hue > 360.0f) hue = hue - 360.0f;
+  double hue = hueCentered + centerH;
+  if (hue < 0.0) hue = hue + 360.0;
+  else if (hue > 360.0) hue = hue - 360.0;
   return hue;
 }
 
 
 
-array <float, 3> rrt_sweeteners( array <float, 3> in)
+array <double, 3> rrt_sweeteners( array <double, 3> in)
 {
-    array <float, 3> aces = in;
+    array <double, 3> aces = in;
     
     // --- Glow module --- //
-    float saturation = rgb_2_saturation( aces);
-    float ycIn = rgb_2_yc( aces);
-    float s = sigmoid_shaper( (saturation - 0.4f) / 0.2f);
-    float addedGlow = 1.0f + glow_fwd( ycIn, RRT_GLOW_GAIN * s, RRT_GLOW_MID);
+    double saturation = rgb_2_saturation( aces);
+    double ycIn = rgb_2_yc( aces);
+    double s = sigmoid_shaper( (saturation - 0.4) / 0.2);
+    double addedGlow = 1.0 + glow_fwd( ycIn, RRT_GLOW_GAIN * s, RRT_GLOW_MID);
 
     aces = mult_f_f3( addedGlow, aces);
 
     // --- Red modifier --- //
-    float hue = rgb_2_hue( aces);
-    float centeredHue = center_hue( hue, RRT_RED_HUE);
-    float hueWeight = cubic_basis_shaper( centeredHue, RRT_RED_WIDTH);
+    double hue = rgb_2_hue( aces);
+    double centeredHue = center_hue( hue, RRT_RED_HUE);
+    double hueWeight = cubic_basis_shaper( centeredHue, RRT_RED_WIDTH);
 
-    aces[0] = aces[0] + hueWeight * saturation * (RRT_RED_PIVOT - aces[0]) * (1.0f - RRT_RED_SCALE);
+    aces[0] = aces[0] + hueWeight * saturation * (RRT_RED_PIVOT - aces[0]) * (1.0 - RRT_RED_SCALE);
 
     // --- ACES to RGB rendering space --- //
-    aces = clamp_f3( aces, 0.0f, HALF_POS_INF);
-    array <float, 3> rgbPre = mult_f3_f44( aces, AP0_2_AP1_MAT);
-    rgbPre = clamp_f3( rgbPre, 0.0f, HALF_MAX);
+    aces = clamp_f3( aces, 0.0, HALF_POS_INF);
+    array <double, 3> rgbPre = mult_f3_f44( aces, AP0_2_AP1_MAT);
+    rgbPre = clamp_f3( rgbPre, 0.0, HALF_MAX);
     
     // --- Global desaturation --- //
     rgbPre = mult_f3_f33( rgbPre, RRT_SAT_MAT);
     return rgbPre;
 }
 
-array <float, 3> inv_rrt_sweeteners(array <float, 3> in)
+array <double, 3> inv_rrt_sweeteners(array <double, 3> in)
 {
-    array <float, 3> rgbPost = in;
+    array <double, 3> rgbPost = in;
     
     // --- Global desaturation --- //
     rgbPost = mult_f3_f33( rgbPost, invert_f33(RRT_SAT_MAT));
 
-    rgbPost = clamp_f3( rgbPost, 0.0f, HALF_MAX);
+    rgbPost = clamp_f3( rgbPost, 0.0, HALF_MAX);
 
     // --- RGB rendering space to ACES --- //
-    array <float, 3> aces = mult_f3_f44( rgbPost, AP1_2_AP0_MAT);
+    array <double, 3> aces = mult_f3_f44( rgbPost, AP1_2_AP0_MAT);
 
-    aces = clamp_f3( aces, 0.0f, HALF_MAX);
+    aces = clamp_f3( aces, 0.0, HALF_MAX);
 
     // --- Red modifier --- //
-    float hue = rgb_2_hue( aces);
-    float centeredHue = center_hue( hue, RRT_RED_HUE);
-    float hueWeight = cubic_basis_shaper( centeredHue, RRT_RED_WIDTH);
+    double hue = rgb_2_hue( aces);
+    double centeredHue = center_hue( hue, RRT_RED_HUE);
+    double hueWeight = cubic_basis_shaper( centeredHue, RRT_RED_WIDTH);
 
-    float minChan;
-    if (centeredHue < 0.0f) { // min_f3(aces) = aces[1] (i.e. magenta-red)
+    double minChan;
+    if (centeredHue < 0.0) { // min_f3(aces) = aces[1] (i.e. magenta-red)
       minChan = aces[1];
     } else { // min_f3(aces) = aces[2] (i.e. yellow-red)
       minChan = aces[2];
     }
 
-    float a = hueWeight * (1.0f - RRT_RED_SCALE) - 1.0f;
-    float b = aces[0] - hueWeight * (RRT_RED_PIVOT + minChan) * (1.0f - RRT_RED_SCALE);
-    float c = hueWeight * RRT_RED_PIVOT * minChan * (1.0f - RRT_RED_SCALE);
+    double a = hueWeight * (1.0 - RRT_RED_SCALE) - 1.0;
+    double b = aces[0] - hueWeight * (RRT_RED_PIVOT + minChan) * (1.0 - RRT_RED_SCALE);
+    double c = hueWeight * RRT_RED_PIVOT * minChan * (1.0 - RRT_RED_SCALE);
 
-    aces[0] = ( -b - sqrtf( b * b - 4.0f * a * c)) / ( 2.0f * a);
+    aces[0] = ( -b - sqrtf( b * b - 4.0 * a * c)) / ( 2.0 * a);
 
     // --- Glow module --- //
-    float saturation = rgb_2_saturation( aces);
-    float ycOut = rgb_2_yc( aces);
-    float s = sigmoid_shaper( (saturation - 0.4f) / 0.2f);
-    float reducedGlow = 1.0f + glow_inv( ycOut, RRT_GLOW_GAIN * s, RRT_GLOW_MID);
+    double saturation = rgb_2_saturation( aces);
+    double ycOut = rgb_2_yc( aces);
+    double s = sigmoid_shaper( (saturation - 0.4) / 0.2);
+    double reducedGlow = 1.0 + glow_inv( ycOut, RRT_GLOW_GAIN * s, RRT_GLOW_MID);
 
     aces = mult_f_f3( ( reducedGlow), aces);
     return aces;

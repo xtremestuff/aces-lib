@@ -15,17 +15,17 @@ using namespace std;
 
 
 // Textbook monomial to basis-function conversion matrix.
-const array <array <float, 3>, 3> M1 = { {
-  {  0.5f, -1.0f, 0.5f },
-  { -1.0f,  1.0f, 0.5f },
-  {  0.5f,  0.0f, 0.0f }
+const array <array <double, 3>, 3> M1 = { {
+  {  0.5, -1.0, 0.5 },
+  { -1.0,  1.0, 0.5 },
+  {  0.5,  0.0, 0.0 }
 } };
 
 struct TsPoint
 {
-    float x;        // ACES
-    float y;        // luminance
-    float slope;    // 
+    double x;        // ACES
+    double y;        // luminance
+    double slope;    // 
 };
 
 struct TsParams
@@ -33,8 +33,8 @@ struct TsParams
     TsPoint Min;
     TsPoint Mid;
     TsPoint Max;
-    float coefsLow[6];
-    float coefsHigh[6];    
+    double coefsLow[6];
+    double coefsHigh[6];    
 };
 
 
@@ -42,75 +42,75 @@ struct TsParams
 // TODO: Move all "magic numbers" (i.e. values in interpolation tables, etc.) to top 
 // and define as constants
 
-const float MIN_STOP_SDR = -6.5f;
-const float MAX_STOP_SDR = 6.5f;
+const double MIN_STOP_SDR = -6.5;
+const double MAX_STOP_SDR = 6.5;
 
-const float MIN_STOP_RRT = -15.0f;
-const float MAX_STOP_RRT = 18.0f;
+const double MIN_STOP_RRT = -15.0;
+const double MAX_STOP_RRT = 18.0;
 
-const float MIN_LUM_SDR = 0.02f;
-const float MAX_LUM_SDR = 48.0f;
+const double MIN_LUM_SDR = 0.02;
+const double MAX_LUM_SDR = 48.0;
 
-const float MIN_LUM_RRT = 0.0001f;
-const float MAX_LUM_RRT = 10000.0f;
+const double MIN_LUM_RRT = 0.0001;
+const double MAX_LUM_RRT = 10000.0;
 
 
-float lookup_ACESmin( float minLum )
+double lookup_ACESmin( double minLum )
 {
-    const array <array <float, 2>, 2> minTable = { { { log10f(MIN_LUM_RRT), MIN_STOP_RRT },
+    const array <array <double, 2>, 2> minTable = { { { log10f(MIN_LUM_RRT), MIN_STOP_RRT },
                                    { log10f(MIN_LUM_SDR), MIN_STOP_SDR } } };
 
-    return 0.18f*powf( 2.0f, interpolate1D( minTable, log10f( minLum)));
+    return 0.18*powf( 2.0, interpolate1D( minTable, log10f( minLum)));
 }
 
-float lookup_ACESmax( float maxLum )
+double lookup_ACESmax( double maxLum )
 {
-    const array <array <float, 2>, 2>  maxTable = { { { log10f(MAX_LUM_SDR), MAX_STOP_SDR },
+    const array <array <double, 2>, 2>  maxTable = { { { log10f(MAX_LUM_SDR), MAX_STOP_SDR },
                                    { log10f(MAX_LUM_RRT), MAX_STOP_RRT } } };
 
-    return 0.18f*powf( 2.0f, interpolate1D( maxTable, log10f( maxLum)));
+    return 0.18*powf( 2.0, interpolate1D( maxTable, log10f( maxLum)));
 }
 
-array <float, 5> init_coefsLow(
+array <double, 5> init_coefsLow(
     TsPoint TsPointLow,
     TsPoint TsPointMid
 )
 {
-    array <float, 5> coefsLow;
+    array <double, 5> coefsLow;
 
-    float knotIncLow = (log10f(TsPointMid.x) - log10f(TsPointLow.x)) / 3.0f;
-    // float halfKnotInc = (log10f(TsPointMid.x) - log10f(TsPointLow.x)) / 6.0f;
+    double knotIncLow = (log10f(TsPointMid.x) - log10f(TsPointLow.x)) / 3.0;
+    // double halfKnotInc = (log10f(TsPointMid.x) - log10f(TsPointLow.x)) / 6.0;
 
     // Determine two lowest coefficients (straddling minPt)
-    coefsLow[0] = (TsPointLow.slope * (log10f(TsPointLow.x)-0.5f*knotIncLow)) + ( log10f(TsPointLow.y) - TsPointLow.slope * log10f(TsPointLow.x));
-    coefsLow[1] = (TsPointLow.slope * (log10f(TsPointLow.x)+0.5f*knotIncLow)) + ( log10f(TsPointLow.y) - TsPointLow.slope * log10f(TsPointLow.x));
+    coefsLow[0] = (TsPointLow.slope * (log10f(TsPointLow.x)-0.5*knotIncLow)) + ( log10f(TsPointLow.y) - TsPointLow.slope * log10f(TsPointLow.x));
+    coefsLow[1] = (TsPointLow.slope * (log10f(TsPointLow.x)+0.5*knotIncLow)) + ( log10f(TsPointLow.y) - TsPointLow.slope * log10f(TsPointLow.x));
     // NOTE: if slope=0, then the above becomes just 
         // coefsLow[0] = log10f(TsPointLow.y);
         // coefsLow[1] = log10f(TsPointLow.y);
     // leaving it as a variable for now in case we decide we need non-zero slope extensions
 
     // Determine two highest coefficients (straddling midPt)
-    coefsLow[3] = (TsPointMid.slope * (log10f(TsPointMid.x)-0.5f*knotIncLow)) + ( log10f(TsPointMid.y) - TsPointMid.slope * log10f(TsPointMid.x));
-    coefsLow[4] = (TsPointMid.slope * (log10f(TsPointMid.x)+0.5f*knotIncLow)) + ( log10f(TsPointMid.y) - TsPointMid.slope * log10f(TsPointMid.x));
+    coefsLow[3] = (TsPointMid.slope * (log10f(TsPointMid.x)-0.5*knotIncLow)) + ( log10f(TsPointMid.y) - TsPointMid.slope * log10f(TsPointMid.x));
+    coefsLow[4] = (TsPointMid.slope * (log10f(TsPointMid.x)+0.5*knotIncLow)) + ( log10f(TsPointMid.y) - TsPointMid.slope * log10f(TsPointMid.x));
     
     // Middle coefficient (which defines the "sharpness of the bend") is linearly interpolated
-    array <array <float, 2>, 2> bendsLow = { { {MIN_STOP_RRT, 0.18f},
-                             {MIN_STOP_SDR, 0.35f} } };
-    float pctLow = interpolate1D( bendsLow, log2f(TsPointLow.x/0.18f));
+    array <array <double, 2>, 2> bendsLow = { { {MIN_STOP_RRT, 0.18},
+                             {MIN_STOP_SDR, 0.35} } };
+    double pctLow = interpolate1D( bendsLow, log2f(TsPointLow.x/0.18));
     coefsLow[2] = log10f(TsPointLow.y) + pctLow*(log10f(TsPointMid.y)-log10f(TsPointLow.y));
 
     return coefsLow;
 } 
 
-array <float, 5> init_coefsHigh(
+array <double, 5> init_coefsHigh(
     TsPoint TsPointMid, 
     TsPoint TsPointMax
 )
 {
-    array <float, 5> coefsHigh;
+    array <double, 5> coefsHigh;
 
-    float knotIncHigh = (log10f(TsPointMax.x) - log10f(TsPointMid.x)) / 3.0f;
-    // float halfKnotInc = (log10f(TsPointMax.x) - log10f(TsPointMid.x)) / 6.0f;
+    double knotIncHigh = (log10f(TsPointMax.x) - log10f(TsPointMid.x)) / 3.0;
+    // double halfKnotInc = (log10f(TsPointMax.x) - log10f(TsPointMid.x)) / 6.0;
 
     // Determine two lowest coefficients (straddling midPt)
     coefsHigh[0] = (TsPointMid.slope * (log10f(TsPointMid.x)-0.5*knotIncHigh)) + ( log10f(TsPointMid.y) - TsPointMid.slope * log10f(TsPointMid.x));
@@ -125,34 +125,34 @@ array <float, 5> init_coefsHigh(
     // leaving it as a variable for now in case we decide we need non-zero slope extensions
     
     // Middle coefficient (which defines the "sharpness of the bend") is linearly interpolated
-    array <array <float, 2>, 2> bendsHigh = { { {MAX_STOP_SDR, 0.89f},
-                              {MAX_STOP_RRT, 0.90f} } };
-    float pctHigh = interpolate1D( bendsHigh, log2f(TsPointMax.x/0.18f));
+    array <array <double, 2>, 2> bendsHigh = { { {MAX_STOP_SDR, 0.89},
+                              {MAX_STOP_RRT, 0.90} } };
+    double pctHigh = interpolate1D( bendsHigh, log2f(TsPointMax.x/0.18));
     coefsHigh[2] = log10f(TsPointMid.y) + pctHigh*(log10f(TsPointMax.y)-log10f(TsPointMid.y));
     
     return coefsHigh;
 }
 
 
-float shift( float in, float expfShift)
+double shift( double in, double expfShift)
 {
-    return powf(2.0f,(log2f(in)-expfShift));
+    return powf(2.0,(log2f(in)-expfShift));
 }
 
 
 TsParams init_TsParams(
-    float minLum,
-    float maxLum,
-    float expfShift = 0
+    double minLum,
+    double maxLum,
+    double expfShift = 0
 )
 {
-    TsPoint MIN_PT = { lookup_ACESmin(minLum), minLum, 0.0f};
-    TsPoint MID_PT = { 0.18f, 4.8f, 1.55f};
-    TsPoint MAX_PT = { lookup_ACESmax(maxLum), maxLum, 0.0f};
-    array <float, 5> cLow = init_coefsLow( MIN_PT, MID_PT);
-    array <float, 5> cHigh = init_coefsHigh( MID_PT, MAX_PT);
+    TsPoint MIN_PT = { lookup_ACESmin(minLum), minLum, 0.0};
+    TsPoint MID_PT = { 0.18, 4.8, 1.55};
+    TsPoint MAX_PT = { lookup_ACESmax(maxLum), maxLum, 0.0};
+    array <double, 5> cLow = init_coefsLow( MIN_PT, MID_PT);
+    array <double, 5> cHigh = init_coefsHigh( MID_PT, MAX_PT);
     MIN_PT.x = shift(lookup_ACESmin(minLum),expfShift);
-    MID_PT.x = shift(0.18f,expfShift);
+    MID_PT.x = shift(0.18,expfShift);
     MAX_PT.x = shift(lookup_ACESmax(maxLum),expfShift);
 
     TsParams P = {
@@ -167,9 +167,9 @@ TsParams init_TsParams(
 }
 
 
-float ssts
+double ssts
 ( 
-    float x,
+    double x,
     TsParams C
 )
 {
@@ -178,9 +178,9 @@ float ssts
 
     // Check for negatives or zero before taking the log. If negative or zero,
     // set to HALF_MIN.
-    float logx = log10f( max(x, HALF_MIN )); 
+    double logx = log10f( max(x, HALF_MIN )); 
 
-    float logy;
+    double logy;
 
     if ( logx <= log10f(C.Min.x) ) { 
 
@@ -188,24 +188,24 @@ float ssts
 
     } else if (( logx > log10f(C.Min.x) ) && ( logx < log10f(C.Mid.x) )) {
 
-        float knot_coord = (N_KNOTS_LOW-1) * (logx-log10f(C.Min.x))/(log10f(C.Mid.x)-log10f(C.Min.x));
+        double knot_coord = (N_KNOTS_LOW-1) * (logx-log10f(C.Min.x))/(log10f(C.Mid.x)-log10f(C.Min.x));
         int j = knot_coord;
-        float t = knot_coord - j;
+        double t = knot_coord - j;
 
-        array <float, 3> cf = { C.coefsLow[ j], C.coefsLow[ j + 1], C.coefsLow[ j + 2]};
+        array <double, 3> cf = { C.coefsLow[ j], C.coefsLow[ j + 1], C.coefsLow[ j + 2]};
 
-        array <float, 3> monomials = { t * t, t, 1.0f };
+        array <double, 3> monomials = { t * t, t, 1.0 };
         logy = dot_f3_f3( monomials, mult_f3_f33( cf, M1));
 
     } else if (( logx >= log10f(C.Mid.x) ) && ( logx < log10f(C.Max.x) )) {
 
-        float knot_coord = (N_KNOTS_HIGH-1) * (logx-log10f(C.Mid.x))/(log10f(C.Max.x)-log10f(C.Mid.x));
+        double knot_coord = (N_KNOTS_HIGH-1) * (logx-log10f(C.Mid.x))/(log10f(C.Max.x)-log10f(C.Mid.x));
         int j = knot_coord;
-        float t = knot_coord - j;
+        double t = knot_coord - j;
 
-        array <float, 3> cf = { C.coefsHigh[ j], C.coefsHigh[ j + 1], C.coefsHigh[ j + 2]};
+        array <double, 3> cf = { C.coefsHigh[ j], C.coefsHigh[ j + 1], C.coefsHigh[ j + 2]};
 
-        array <float, 3> monomials = { t * t, t, 1.0f };
+        array <double, 3> monomials = { t * t, t, 1.0 };
         logy = dot_f3_f3( monomials, mult_f3_f33( cf, M1));
 
     } else { //if ( logIn >= log10f(C.Max.x) ) { 
@@ -219,32 +219,32 @@ float ssts
 }
 
 
-float inv_ssts
+double inv_ssts
 ( 
-    float y,
+    double y,
     TsParams C
 )
 {  
     const int N_KNOTS_LOW = 4;
     const int N_KNOTS_HIGH = 4;
 
-    const float KNOT_INC_LOW = (log10f(C.Mid.x) - log10f(C.Min.x)) / (N_KNOTS_LOW - 1.0f);
-    const float KNOT_INC_HIGH = (log10f(C.Max.x) - log10f(C.Mid.x)) / (N_KNOTS_HIGH - 1.0f);
+    const double KNOT_INC_LOW = (log10f(C.Mid.x) - log10f(C.Min.x)) / (N_KNOTS_LOW - 1.0);
+    const double KNOT_INC_HIGH = (log10f(C.Max.x) - log10f(C.Mid.x)) / (N_KNOTS_HIGH - 1.0);
 
     // KNOT_Y is luminance of the spline at each knot
-    float KNOT_Y_LOW[ N_KNOTS_LOW];
+    double KNOT_Y_LOW[ N_KNOTS_LOW];
     for (int i = 0; i < N_KNOTS_LOW; i = i+1) {
-    KNOT_Y_LOW[ i] = ( C.coefsLow[i] + C.coefsLow[i+1]) / 2.0f;
+    KNOT_Y_LOW[ i] = ( C.coefsLow[i] + C.coefsLow[i+1]) / 2.0;
     };
 
-    float KNOT_Y_HIGH[ N_KNOTS_HIGH];
+    double KNOT_Y_HIGH[ N_KNOTS_HIGH];
     for (int i = 0; i < N_KNOTS_HIGH; i = i+1) {
-    KNOT_Y_HIGH[ i] = ( C.coefsHigh[i] + C.coefsHigh[i+1]) / 2.0f;
+    KNOT_Y_HIGH[ i] = ( C.coefsHigh[i] + C.coefsHigh[i+1]) / 2.0;
     };
 
-    float logy = log10f( max(y,1e-10));
+    double logy = log10f( max(y,1e-10));
 
-    float logx;
+    double logx;
     if (logy <= log10f(C.Min.y)) {
 
         logx = log10f(C.Min.x);
@@ -252,7 +252,7 @@ float inv_ssts
     } else if ( (logy > log10f(C.Min.y)) && (logy <= log10f(C.Mid.y)) ) {
 
         unsigned int j;
-        array <float, 3> cf;
+        array <double, 3> cf;
         if ( logy > KNOT_Y_LOW[ 0] && logy <= KNOT_Y_LOW[ 1]) {
             cf[ 0] = C.coefsLow[0];  cf[ 1] = C.coefsLow[1];  cf[ 2] = C.coefsLow[2];  j = 0;
         } else if ( logy > KNOT_Y_LOW[ 1] && logy <= KNOT_Y_LOW[ 2]) {
@@ -261,23 +261,23 @@ float inv_ssts
             cf[ 0] = C.coefsLow[2];  cf[ 1] = C.coefsLow[3];  cf[ 2] = C.coefsLow[4];  j = 2;
         } 
 
-        const array <float, 3> tmp = mult_f3_f33( cf, M1);
+        const array <double, 3> tmp = mult_f3_f33( cf, M1);
 
-        float a = tmp[ 0];
-        float b = tmp[ 1];
-        float c = tmp[ 2];
+        double a = tmp[ 0];
+        double b = tmp[ 1];
+        double c = tmp[ 2];
         c = c - logy;
 
-        const float d = sqrtf( b * b - 4. * a * c);
+        const double d = sqrtf( b * b - 4. * a * c);
 
-        const float t = ( 2. * c) / ( -d - b);
+        const double t = ( 2. * c) / ( -d - b);
 
         logx = log10f(C.Min.x) + ( t + j) * KNOT_INC_LOW;
 
     } else if ( (logy > log10f(C.Mid.y)) && (logy < log10f(C.Max.y)) ) {
 
         unsigned int j;
-        array <float, 3> cf;
+        array <double, 3> cf;
         if ( logy >= KNOT_Y_HIGH[ 0] && logy <= KNOT_Y_HIGH[ 1]) {
             cf[ 0] = C.coefsHigh[0];  cf[ 1] = C.coefsHigh[1];  cf[ 2] = C.coefsHigh[2];  j = 0;
         } else if ( logy > KNOT_Y_HIGH[ 1] && logy <= KNOT_Y_HIGH[ 2]) {
@@ -286,16 +286,16 @@ float inv_ssts
             cf[ 0] = C.coefsHigh[2];  cf[ 1] = C.coefsHigh[3];  cf[ 2] = C.coefsHigh[4];  j = 2;
         } 
 
-        const array <float, 3> tmp = mult_f3_f33( cf, M1);
+        const array <double, 3> tmp = mult_f3_f33( cf, M1);
 
-        float a = tmp[ 0];
-        float b = tmp[ 1];
-        float c = tmp[ 2];
+        double a = tmp[ 0];
+        double b = tmp[ 1];
+        double c = tmp[ 2];
         c = c - logy;
 
-        const float d = sqrtf( b * b - 4. * a * c);
+        const double d = sqrtf( b * b - 4. * a * c);
 
-        const float t = ( 2. * c) / ( -d - b);
+        const double t = ( 2. * c) / ( -d - b);
 
         logx = log10f(C.Mid.x) + ( t + j) * KNOT_INC_HIGH;
 
@@ -310,13 +310,13 @@ float inv_ssts
 }
 
 
-array <float, 3> ssts_f3
+array <double, 3> ssts_f3
 ( 
-    array <float, 3> &x,
+    array <double, 3> &x,
     TsParams C
 )
 {
-    array <float, 3> out;
+    array <double, 3> out;
     out[0] = ssts( x[0], C);
     out[1] = ssts( x[1], C);
     out[2] = ssts( x[2], C);
@@ -325,13 +325,13 @@ array <float, 3> ssts_f3
 }
 
 
-array <float, 3> inv_ssts_f3
+array <double, 3> inv_ssts_f3
 ( 
-    const array <float, 3> &x,
+    const array <double, 3> &x,
     TsParams C
 )
 {
-    array <float, 3> out;
+    array <double, 3> out;
     out[0] = inv_ssts( x[0], C);
     out[1] = inv_ssts( x[1], C);
     out[2] = inv_ssts( x[2], C);
